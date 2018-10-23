@@ -1,0 +1,23 @@
+{
+  "name": "nodejsawesome",
+  "version": "1.0.0",
+  "description": "awesome modules",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maratnek/NodeJSAwesome.git"
+  },
+  "author": "ZM",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maratnek/NodeJSAwesome/issues"
+  },
+  "homepage": "https://github.com/maratnek/NodeJSAwesome#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "github-api": "^3.0.0"
+  }
+}
