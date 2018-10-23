@@ -15,11 +15,6 @@ const gh = new GitHub({
 
 const me = gh.getUser(); // no user specified defaults to the user for whom credentials were provided
 
-const clayreimann = gh.getUser('clayreimann');
-clayreimann.listStarredRepos(function(err, repos) {
-   // look at all the starred repos!
-   //console.log(repos);
-});
 
 const express = require('express');
 const app = express();
@@ -29,7 +24,14 @@ app.get('/', (req, res) => {
   me.listNotifications(function(err, notifications) {
     // do some stuff
     //console.log(notifications);
-    res.send(notifications);
+    //res.send(notifications);
+  });
+
+  const clayreimann = gh.getUser('sindresorhus');
+  clayreimann.listStarredRepos(function(err, repos) {
+    // look at all the starred repos!
+    //console.log(repos);
+    res.send(repos);
   });
 
 });
