@@ -10,7 +10,7 @@ class PostService {
       try {
         const res = await axios.get(url);
         const data = res.data;
-        console.log(data);
+        //console.log(data);
         resolve(data);
         // resolve(
         //   data.map(post => ({

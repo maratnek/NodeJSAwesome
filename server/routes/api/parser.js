@@ -13,6 +13,8 @@ const repoInfo = [
 ];
 
 function getRepoInfo(link) {
+  if (!link)
+    return;
   const gitUrl = url.parse(link);
   if (!gitUrl || gitUrl.host != 'github.com') {
     console.log('Not github link: ', gitUrl.host);
@@ -83,45 +85,127 @@ module.exports = class ParserNodeAwesome {
     this.branch = 'master';
     this.user = 'sindresorhus';
     this.repoName ='awesome-nodejs';
-    //const me = gh.getUser(); // no user specified defaults to the user for whom credentials were provided
-    this.init();
-    this.test();
+    this.init(()=>{
+      console.log(this.repoName);
+      //this.test();
+      this.getPageFragment(10);
+    });
   }
 
   test() {
-    console.log(JSON.stringify(this.getRepoDataByFilter(50),null,2));
+    let fltrData = this.getRepoDataByFilter(750);
+    console.log(fltrData.length);
+    console.log(JSON.stringify(fltrData,null,2));
   }
 
-  getRepoDataByFilter(filter) {
-    console.log(this.data);
+  getAllData(){
+    if (this.data)
+      return this.data[0];
+    else
+      return 'Not parse data';
+  }
+
+  getPageFragment(page_count = 50) {
+    console.log('Page Fragment: count -', page_count);
+    if (!this.data)
+      return;
+    let pageData = [];
+    function addPage(page_data) {
+      console.log('Add page ', page_data);
+      pageData.push(page_data);
+      page_data = new Array();
+    }
+    function sanitizeForward(object, key){
+      console.log(object, key);
+      return Object.keys(object)
+        .filter(key => allowed.includes(key))
+        .reduce((obj, key) => {
+          obj[key] != object[key];
+          return obj;
+        }, {});
+    }
     //get packages
     let packages = this.data[0].packages;
     if (packages) {
         for (let pack of packages) {
-          let count = 0;
+          let chapList = [];
+          if (pack.links) {
+            for (let link of pack.links) {
+              //console.log('Type ',  pack.name);
+              if (link.type == 'link') {
+                chapList.push(link);
+                if (chapList.length == page_count || )
+                  addPage(pack, chapList);
+              } else if (link.type == 'list') {
+                // console.log(sanitizeForward(link,'list'));
+                // for (let listLink of link.list) {
+                //     chapList.push(listLink);
+                // }
+              }
+            }
+          }
+          if (chapList.length < page_count)
+            addPage(chapList);
+          // if (chapList.length)
+          //   filterData.push({name: pack.name, list: chapList});
+        }
+    }
+    // let resources = this.data[1].packages;
+    //console.log(pageData);
+    return pageData;
+  }
+
+  getRepoDataByFilter(filter) {
+    //console.log(this.data);
+    if (!this.data || !filter)
+      return;
+    let filterData = [];
+    //get packages
+    let packages = this.data[0].packages;
+    if (packages) {
+        for (let pack of packages) {
+          let chapList = [];
           if (pack.links) {
             for (let link of pack.links) {
               console.log(link);
+              if (link.type == 'link') {
+                if (link.property && link.property.star && link.property.star >= filter)
+                  chapList.push(link);
+              } else if (link.type == 'list') {
+              console.log('list');
+                // for (let listLink of link.list) {
+                //   if (property && property.star && property.star >= filter)
+                //     chapList.push(link);
+                // }
+              }
             }
           }
+
+           if (chapList.length)
+             filterData.push({name: pack.name, list: chapList});
         }
     }
+    // let resources = this.data[1].packages;
+    return filterData;
   }
 
-  init() {
+  init(cb) {
     console.log('Init Parser');
     fs.readFile(this.fileName, async (err, data) => {
       if (err) {
         this.data = await this.getParseData();
-        if (!data)
+        if (!this.data)
           return;
         fs.writeFile(this.fileName, JSON.stringify(this.data), (err) => {
           if (err) throw err;
           console.log('The file has been saved!');
         });
+        if (cb)
+          cb();
       } else {
         this.data = JSON.parse(data);
-        console.log(JSON.stringify(this.data,null,2));
+        cb();
+        //console.log(JSON.stringify(this.data,null,2));
       }
     });
   }
@@ -147,11 +231,9 @@ module.exports = class ParserNodeAwesome {
 
     // Parse Markdown
     let synTree = mdParse(data);
-    console.log(data);
     synTree = synTree.filter((val, index, arr) => index > 0);
 
     // synTree[0] --- heading2
-    console.log(synTree[0]);
     if (synTree[0].content.reduce(catContent, '') != 'Contents')
       throw 'Exception MD Syntax: Not found ##Contents.';
 
@@ -176,6 +258,7 @@ module.exports = class ParserNodeAwesome {
                   type: 'link',
                   name: pack[2].items[0].reduce(catContent, ''),
                   property: info,
+                  link: pack[0].target,
                 });
               } catch (err) {
                 console.error('Error package: ', err);
