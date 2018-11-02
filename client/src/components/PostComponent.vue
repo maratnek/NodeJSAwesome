@@ -9,7 +9,7 @@
     <ul class="package-container">
       <li class="package" v-for="(packages, index) in data">
         <h3>{{packages.name}}</h3>
-        <div class="" v-for="(pack, index) in packages.links">
+        <div class="" v-for="(pack, index) in packages.list">
           <h3>Type: {{pack.type}}</h3>
           <div class="" v-if="pack.type == 'link'">
             <div class="card">
