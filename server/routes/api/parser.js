@@ -87,15 +87,17 @@ module.exports = class ParserNodeAwesome {
     this.repoName ='awesome-nodejs';
     this.init(()=>{
       console.log(this.repoName);
-<<<<<<< HEAD
-      //this.test();
-      // this.getPageFragment(10);
-      this.getPageSplit(10);
-=======
       this.test();
       // this.getPageFragment(10);
-      this.pageSlice(6)
->>>>>>> d385486d59e96fabb55518ab79c98836aa05be68
+      // this.pageSlice(8);
+      // this.pageSlice(7);
+      //this.pageSlice(6)
+      // this.pageSlice(5);
+      this.pageSlice(4);
+      // this.pageSlice(3);
+      // this.pageSlice(2);
+      // this.pageSlice(1);
+      // this.pageSlice(0);
     });
   }
 
@@ -123,38 +125,38 @@ module.exports = class ParserNodeAwesome {
             {name: 'pack8'},
             {name: 'pack9'},
             {name: 'pack10'},
+            {name: 'pack11'},
           ],
         },
         {
           name: 'name3',
           list: [
-            {name: 'pack10'},
             {name: 'pack12'},
             {name: 'pack13'},
+            {name: 'pack14'},
           ],
         },
         {
           name: 'name4',
           list: [
-            {name: 'pack14'},
             {name: 'pack15'},
+            {name: 'pack16'},
           ],
         },
         {
           name: 'name5',
           list: [
-            {name: 'pack16'},
             {name: 'pack17'},
             {name: 'pack18'},
             {name: 'pack19'},
             {name: 'pack20'},
+            {name: 'pack21'},
           ],
         },
     ];
   }
 
   sanitizeForward(object, key){
-    // console.log(object, key);
     return Object.keys(object)
     .filter(k => k != key)
     .reduce((obj, key) => {
@@ -164,38 +166,77 @@ module.exports = class ParserNodeAwesome {
   }
 
   packSlice(pack, size = 3) {
-    // console.log(pack, size);
     let packages = [];
     let body = this.sanitizeForward(pack, 'list');
-    console.log('body: ', body);
-    let tList = [];
-    let count = 0;
-    for (let it of pack.list) {
-      tList.push(it);
-      if (tList.length == size) {
-        body.list = tList;
-        console.log(body);
-        packages.push(body);
-        tList = [];
-      }
-    }
-    if (tList.length) {
-        body.list = tList;
-        console.log(body);
-        packages.push(body);
-        tList = [];
+    console.log('Slice ', size);
+    let len = pack.list.length;
+    let i,j;
+    for (i=0,j=len; i<j; i+=size) {
+      let b = Object.assign({},body);
+      b.list = pack.list.slice(i,i+size);
+      packages.push(b);
     }
     return packages;
   }
 
-  pageSlice(count) {
-    // console.log(this.packages, count);
-    // for (let pack of this.packages) {
-      // console.log(pack.name, pack.list.length);
-    // }
+  getChunk(pack, size) {
+    // console.log('Get chunk');
+    let body = this.sanitizeForward(pack, 'list');
+    let b1 = Object.assign({},body);
+    let b2 = Object.assign({},body);
+    b1.list = pack.list.slice(0, size);
+    b2.list = pack.list.slice(size, pack.list.length);
+    return [b1, b2];
+  }
 
-    let sPackages = this.packSlice(this.packages[0]);
-    console.log(sPackages);
+  pageSlice(count = 3) {
+    if (!this.packages.length || count == 0)
+      return
+    let book = [];
+    let page = [];
+    let pageLength = (page) => {
+      return page.reduce((sum, pack) => sum += pack.list.length, 0);
+    }
+    console.log('Page By ', count);
+    for (let [i,pack] of this.packages.entries()) {
+      // console.log('Pack ', pack.list.length);
+      if (pack.list.length < count - pageLength(page)) {
+        page.push(pack);
+      } else if (pack.list.length > count - pageLength(page)) {
+        // console.log(count - pageLength(page), page);
+        let chunk = this.getChunk(pack, count - pageLength(page));
+        // console.log(chunk);
+        page.push(chunk[0]);
+        book.push(page);
+        page = [];
+        // console.log(book, ' - ',page);
+        if (chunk[1].list.length > count) {
+          let packS = this.packSlice(chunk[1], count);
+          for (let it of packS) {
+            if (it.list.length == count) {
+              book.push(it);
+            } else {
+              page.push(it);
+            }
+          }
+        } else if (chunk[1].list.length < count) {
+          page.push(chunk[1]);
+        } else {
+          book.push(chunk[1]);
+        }
+      } else {
+        page.push(pack);
+        book.push(page);
+        page = [];
+      }
+    }
+    if (page.length) {
+      book.push(page);
+    }
+    for (let [i, page] of book.entries()) {
+      console.log('page ', i + 1, JSON.stringify(page,null,2));
+    }
+    return book;
 
   }
 
@@ -204,17 +245,6 @@ module.exports = class ParserNodeAwesome {
       return this.data[0];
     else
       return 'Not parse data';
-  }
-
-<<<<<<< HEAD
-  sanitizeForward(object, keyList) {
-    if (object.hasOwnProperty(keyList))
-    return Object.keys(object)
-    .filter(key => key != keyList)
-    .reduce((obj, key) => {
-      obj[key] =  object[key];
-      return obj;
-    }, {});
   }
 
   splitPackage(pack, count) {
@@ -228,35 +258,11 @@ module.exports = class ParserNodeAwesome {
       arr.push(pack.list.slice(i, i + count))
       i += count;
     }
-    // console.log(JSON.stringify(arr));
-    // for (let [index, item] of pack.list.entries()) {
-    //   //console.log(item);
-    //   if (item.type == 'link') {
-    //     subarr.push(item);
-    //     if (subarr.length == count) {
-    //       //console.log(subarr);
-    //       body.list = subarr;
-    //       arr.push(body);
-    //       console.log(body);
-    //       subarr = [];
-    //     }
-    //   }
-    // }
-    // if (subarr.length) {
-    //   body.list = subarr;
-    //   arr.push(body);
-    // }
-    // console.log(arr);
     return arr;
   }
 
-  getPageSplit(count = 50) {
-    console.log('Page Split', count);
-=======
-
   getPageFragment(page_count = 50) {
     console.log('Page Fragment: count -', page_count);
->>>>>>> d385486d59e96fabb55518ab79c98836aa05be68
     if (!this.data)
       return;
     let book = [];
@@ -292,90 +298,72 @@ module.exports = class ParserNodeAwesome {
     }
   }
 
-  getPageFragment(pageCount = 50) {
-    console.log('Page Fragment: count - ', pageCount);
-    if (!this.data)
-      return;
-    let pageData = [];
-
-    function sanitizeForward(object, keyList) {
-      if (object.hasOwnProperty(keyList))
-      return Object.keys(object)
-        .filter(key => key != keyList)
-        .reduce((obj, key) => {
-          obj[key] =   object[key];
-          return obj;
-        }, {});
-    }
-
-    function addPage(pack, pd) {
-      let body = sanitizeForward(pack, 'list');
-      if (body) {
-        body.list = pd;
-        console.log(body);
-        pageData.push(body);
-        pd = [];
-      }
-    }
-
-    let pCount = 1;
-    let packages = this.data[0].packages;
-    if (packages) {
-<<<<<<< HEAD
-      let count = 0;
-      let chapList = [];
-      let bodyList = [];
-      for (let pack of packages) {
-        let body = sanitizeForward(pack, 'list');
-        for (let [i, link] of pack.list.entries()) {
-          if (link.type == 'link') {
-            ++count;
-            chapList.push(link);
-            if (count == pageCount) {
-              body.list = chapList;
-              console.log(body);
-              chapList = [];
-              count = 0;
-              bodyList.push(body);
-              pageData.push({ page: pCount++, list: bodyList });
-              bodyList = [];
-            } else if (pack.list.length == i + 1) {
-              body.list = chapList;
-              console.log(body);
-              bodyList.push(body);
-              chapList = [];
-            }
-          } else if (link.type == 'list') {
-            for (let sublink of link.list) {
-              let subbody = sanitizeForward(sublink, 'list');
-              body.list = subbody;
-              if (sublink.type == 'link')
-                ;//++count;
-=======
-        for (let pack of packages) {
-          let chapList = [];
-          if (pack.links) {
-            for (let link of pack.links) {
-              //console.log('Type ',  pack.name);
-              if (link.type == 'link') {
-                chapList.push(link);
-                if (chapList.length == page_count )
-                  addPage(pack, chapList);
-              } else if (link.type == 'list') {
-                // console.log(sanitizeForward(link,'list'));
-                // for (let listLink of link.list) {
-                //     chapList.push(listLink);
-                // }
-              }
->>>>>>> d385486d59e96fabb55518ab79c98836aa05be68
-            }
-          }
-        }
-      }
-    }
+  // getPageFragment(pageCount = 50) {
+  //   console.log('Page Fragment: count - ', pageCount);
+  //   if (!this.data)
+  //     return;
+  //   let pageData = [];
+  //
+  //   function sanitizeForward(object, keyList) {
+  //     if (object.hasOwnProperty(keyList))
+  //     return Object.keys(object)
+  //       .filter(key => key != keyList)
+  //       .reduce((obj, key) => {
+  //         obj[key] =   object[key];
+  //         return obj;
+  //       }, {});
+  //   }
+  //
+  //   function addPage(pack, pd) {
+  //     let body = sanitizeForward(pack, 'list');
+  //     if (body) {
+  //       body.list = pd;
+  //       console.log(body);
+  //       pageData.push(body);
+  //       pd = [];
+  //     }
+  //   }
+  //
+  //   let pCount = 1;
+  //   let packages = this.data[0].packages;
+  //   if (packages) {
+  //     let count = 0;
+  //     let chapList = [];
+  //     let bodyList = [];
+  //     for (let pack of packages) {
+  //       let body = sanitizeForward(pack, 'list');
+  //       for (let [i, link] of pack.list.entries()) {
+  //         if (link.type == 'link') {
+  //           ++count;
+  //           chapList.push(link);
+  //           if (count == pageCount) {
+  //             body.list = chapList;
+  //             console.log(body);
+  //             chapList = [];
+  //             count = 0;
+  //             bodyList.push(body);
+  //             pageData.push({ page: pCount++, list: bodyList });
+  //             bodyList = [];
+  //           } else if (pack.list.length == i + 1) {
+  //             body.list = chapList;
+  //             console.log(body);
+  //             bodyList.push(body);
+  //             chapList = [];
+  //           }
+  //         } else if (link.type == 'list') {
+  //           for (let sublink of link.list) {
+  //             let subbody = sanitizeForward(sublink, 'list');
+  //             body.list = subbody;
+  //             if (sublink.type == 'link')
+  //               ;//++count;
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
     //console.log(JSON.stringify(pageData, null, 1));
-    return pageData;
-  }
+    // return pageData;
+  // }
 
   getRepoDataByFilter(filter) {
     //console.log(this.data);
