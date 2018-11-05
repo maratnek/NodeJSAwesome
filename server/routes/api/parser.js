@@ -2,6 +2,15 @@ const SimpleMD = require('simple-markdown');
 const GitHub = require('github-api');
 const url = require('url');
 const pw = require('./password');
+const page = require('./page');
+const pageLength = page.pageLength;
+const packDeepLength = page.packDeepLength;
+const sanitizeForward = page.sanitizeForward;
+const getChunk = page.getChunk;
+const getDeepChunk = page.getDeepChunk;
+const packDeepSlice = page.packDeepSlice;
+const pageSlice = page.pageSlice;
+
 // basic auth
 const gh = new GitHub({
   username: pw.username,
@@ -91,9 +100,9 @@ module.exports = class ParserNodeAwesome {
       // this.getPageFragment(10);
       // this.pageSlice(8);
       // this.pageSlice(7);
-      //this.pageSlice(6)
-      // this.pageSlice(5);
-      this.pageSlice(4);
+      // this.pageSlice(6)
+      pageSlice(this.packages, 5);
+      // this.pageSlice(4);
       // this.pageSlice(3);
       // this.pageSlice(2);
       // this.pageSlice(1);
@@ -106,139 +115,106 @@ module.exports = class ParserNodeAwesome {
     // console.log(fltrData.length);
     // console.log(JSON.stringify(fltrData,null,2));
 
-    this.packages = [
-        {
-          name: 'name1',
-          list: [
-            {name: 'pack1'},
-            {name: 'pack2'},
-            {name: 'pack3'},
-            {name: 'pack4'},
-          ],
-        },
-        {
-          name: 'name2',
-          list: [
-            {name: 'pack5'},
-            {name: 'pack6'},
-            {name: 'pack7'},
-            {name: 'pack8'},
-            {name: 'pack9'},
-            {name: 'pack10'},
-            {name: 'pack11'},
-          ],
-        },
-        {
-          name: 'name3',
-          list: [
-            {name: 'pack12'},
-            {name: 'pack13'},
-            {name: 'pack14'},
-          ],
-        },
-        {
-          name: 'name4',
-          list: [
-            {name: 'pack15'},
-            {name: 'pack16'},
-          ],
-        },
-        {
-          name: 'name5',
-          list: [
-            {name: 'pack17'},
-            {name: 'pack18'},
-            {name: 'pack19'},
-            {name: 'pack20'},
-            {name: 'pack21'},
-          ],
-        },
-    ];
-  }
-
-  sanitizeForward(object, key){
-    return Object.keys(object)
-    .filter(k => k != key)
-    .reduce((obj, key) => {
-      obj[key] = object[key];
-      return obj;
-    }, {});
-  }
-
-  packSlice(pack, size = 3) {
-    let packages = [];
-    let body = this.sanitizeForward(pack, 'list');
-    console.log('Slice ', size);
-    let len = pack.list.length;
-    let i,j;
-    for (i=0,j=len; i<j; i+=size) {
-      let b = Object.assign({},body);
-      b.list = pack.list.slice(i,i+size);
-      packages.push(b);
-    }
-    return packages;
-  }
-
-  getChunk(pack, size) {
-    // console.log('Get chunk');
-    let body = this.sanitizeForward(pack, 'list');
-    let b1 = Object.assign({},body);
-    let b2 = Object.assign({},body);
-    b1.list = pack.list.slice(0, size);
-    b2.list = pack.list.slice(size, pack.list.length);
-    return [b1, b2];
-  }
-
-  pageSlice(count = 3) {
-    if (!this.packages.length || count == 0)
-      return
-    let book = [];
-    let page = [];
-    let pageLength = (page) => {
-      return page.reduce((sum, pack) => sum += pack.list.length, 0);
-    }
-    console.log('Page By ', count);
-    for (let [i,pack] of this.packages.entries()) {
-      // console.log('Pack ', pack.list.length);
-      if (pack.list.length < count - pageLength(page)) {
-        page.push(pack);
-      } else if (pack.list.length > count - pageLength(page)) {
-        // console.log(count - pageLength(page), page);
-        let chunk = this.getChunk(pack, count - pageLength(page));
-        // console.log(chunk);
-        page.push(chunk[0]);
-        book.push(page);
-        page = [];
-        // console.log(book, ' - ',page);
-        if (chunk[1].list.length > count) {
-          let packS = this.packSlice(chunk[1], count);
-          for (let it of packS) {
-            if (it.list.length == count) {
-              book.push(it);
-            } else {
-              page.push(it);
-            }
-          }
-        } else if (chunk[1].list.length < count) {
-          page.push(chunk[1]);
-        } else {
-          book.push(chunk[1]);
-        }
-      } else {
-        page.push(pack);
-        book.push(page);
-        page = [];
-      }
-    }
-    if (page.length) {
-      book.push(page);
-    }
-    for (let [i, page] of book.entries()) {
-      console.log('page ', i + 1, JSON.stringify(page,null,2));
-    }
-    return book;
+    // this.packages = [
+    //     {
+    //       name: 'name1',
+    //       list: [
+    //         {name: 'pack1'},
+    //         {name: 'pack2'},
+    //         {name: 'pack3'},
+    //         {name: 'pack4'},
+    //       ],
+    //     },
+    //     {
+    //       name: 'name2',
+    //       list: [
+    //         {name: 'pack5'},
+    //         {name: 'pack6'},
+    //         {name: 'pack7'},
+    //         {name: 'pack8'},
+    //         {name: 'pack9'},
+    //         {name: 'pack10'},
+    //         {name: 'pack11'},
+    //       ],
+    //     },
+    //     {
+    //       name: 'name3',
+    //       list: [
+    //         {name: 'pack12'},
+    //         {name: 'pack13'},
+    //         {name: 'pack14'},
+    //       ],
+    //     },
+    //     {
+    //       name: 'name4',
+    //       list: [
+    //         {name: 'pack15'},
+    //         {name: 'pack16'},
+    //       ],
+    //     },
+    //     {
+    //       name: 'name5',
+    //       list: [
+    //         {name: 'pack17'},
+    //         {name: 'pack18'},
+    //         {name: 'pack19'},
+    //         {name: 'pack20'},
+    //         {name: 'pack21'},
+    //       ],
+    //     },
+    // ];
 
   }
+
+  // pageSlice(count = 3) {
+  //   if (!this.packages.length || count == 0)
+  //     return
+  //   let book = [];
+  //   let page = [];
+  //   let pageLength = (page) => {
+  //     return page.reduce((sum, pack) => sum += pack.list.length, 0);
+  //   }
+  //   console.log('Page By ', count);
+  //   for (let [i,pack] of this.packages.entries()) {
+  //     // console.log('Pack ', pack.list.length);
+  //     if (pack.list.length < count - pageLength(page)) {
+  //       page.push(pack);
+  //     } else if (pack.list.length > count - pageLength(page)) {
+  //       // console.log(count - pageLength(page), page);
+  //       let chunk = this.getChunk(pack, count - pageLength(page));
+  //       // console.log(chunk);
+  //       page.push(chunk[0]);
+  //       book.push(page);
+  //       page = [];
+  //       // console.log(book, ' - ',page);
+  //       if (chunk[1].list.length > count) {
+  //         let packS = this.packSlice(chunk[1], count);
+  //         for (let it of packS) {
+  //           if (it.list.length == count) {
+  //             book.push([it]);
+  //           } else {
+  //             page.push(it);
+  //           }
+  //         }
+  //       } else if (chunk[1].list.length < count) {
+  //         page.push(chunk[1]);
+  //       } else {
+  //         book.push(chunk[1]);
+  //       }
+  //     } else {
+  //       page.push(pack);
+  //       book.push(page);
+  //       page = [];
+  //     }
+  //   }
+  //   if (page.length) {
+  //     book.push(page);
+  //   }
+  //   for (let [i, page] of book.entries()) {
+  //     console.log('page ', i + 1, JSON.stringify(page,null,2));
+  //   }
+  //   return book;
+  // }
 
   getAllData(){
     if (this.data)
@@ -247,56 +223,6 @@ module.exports = class ParserNodeAwesome {
       return 'Not parse data';
   }
 
-  splitPackage(pack, count) {
-    // console.log(pack);
-    let body = this.sanitizeForward(pack, 'list');
-    let arr = [];
-    let subarr = [];
-    let i = 0;
-    let length = pack.list.length;
-    while (length >= i) {
-      arr.push(pack.list.slice(i, i + count))
-      i += count;
-    }
-    return arr;
-  }
-
-  getPageFragment(page_count = 50) {
-    console.log('Page Fragment: count -', page_count);
-    if (!this.data)
-      return;
-    let book = [];
-    let page = [];
-    let mod = 0;
-    let packages = this.data[0].packages;
-    for (let part of packages) {
-      console.log(part.name, ' ', part.list.length, ' m:', mod);
-      mod = part.list.length - count + mod;
-      if (mod < 0) {
-        page.push(part);
-      } else if (mod == 0) {
-        page.push(part);
-        book.push(page);
-        page = [];
-      } else {
-        let p = this.splitPackage(part, count);
-        for (let t of p) {
-          console.log(t.list.length);
-        }
-        if (!p) return;
-        for (let iter of p) {
-          if (iter.list.length == count) {
-            page.push(iter);
-            book.push(page);
-            page = [];
-          } else {
-            page.push(iter);
-            mod = iter.list.length;
-          }
-        }
-      }
-    }
-  }
 
   // getPageFragment(pageCount = 50) {
   //   console.log('Page Fragment: count - ', pageCount);
