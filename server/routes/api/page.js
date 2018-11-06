@@ -326,6 +326,7 @@ function pageSlice(packages, count) {
       page = [];
     }
   }
+
   if (page.length) {
     book.push(page);
   }
@@ -336,6 +337,7 @@ function pageSlice(packages, count) {
   return book;
 }
 
+// page slice test
 try {
   let chapters = [
     {
@@ -627,12 +629,63 @@ try {
     }
   ]
 ];
+
   console.log('Page Slice');
   let book = pageSlice(chapters, 5);
   for (let [i, page] of book.entries()) {
     assert.deepEqual(page, pages[i]);
     console.log('Test page slice OK');
   }
+
+  //// data test
+  // packages = [
+  //     {
+  //       name: 'name1',
+  //       list: [
+  //         {name: 'pack1'},
+  //         {name: 'pack2'},
+  //         {name: 'pack3'},
+  //         {name: 'pack4'},
+  //       ],
+  //     },
+  //     {
+  //       name: 'name2',
+  //       list: [
+  //         {name: 'pack5'},
+  //         {name: 'pack6'},
+  //         {name: 'pack7'},
+  //         {name: 'pack8'},
+  //         {name: 'pack9'},
+  //         {name: 'pack10'},
+  //         {name: 'pack11'},
+  //       ],
+  //     },
+  //     {
+  //       name: 'name3',
+  //       list: [
+  //         {name: 'pack12'},
+  //         {name: 'pack13'},
+  //         {name: 'pack14'},
+  //       ],
+  //     },
+  //     {
+  //       name: 'name4',
+  //       list: [
+  //         {name: 'pack15'},
+  //         {name: 'pack16'},
+  //       ],
+  //     },
+  //     {
+  //       name: 'name5',
+  //       list: [
+  //         {name: 'pack17'},
+  //         {name: 'pack18'},
+  //         {name: 'pack19'},
+  //         {name: 'pack20'},
+  //         {name: 'pack21'},
+  //       ],
+  //     },
+  // ];
 
 } catch (e) {
   console.log('Test page slice ERROR', e);

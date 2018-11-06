@@ -94,7 +94,7 @@ module.exports = class ParserNodeAwesome {
     this.branch = 'master';
     this.user = 'sindresorhus';
     this.repoName ='awesome-nodejs';
-    this.init(()=>{
+    this.init(() => {
       console.log(this.repoName);
       this.test();
       // this.getPageFragment(10);
@@ -111,110 +111,8 @@ module.exports = class ParserNodeAwesome {
   }
 
   test() {
-    // let fltrData = this.getRepoDataByFilter(750);
-    // console.log(fltrData.length);
-    // console.log(JSON.stringify(fltrData,null,2));
-
-    // this.packages = [
-    //     {
-    //       name: 'name1',
-    //       list: [
-    //         {name: 'pack1'},
-    //         {name: 'pack2'},
-    //         {name: 'pack3'},
-    //         {name: 'pack4'},
-    //       ],
-    //     },
-    //     {
-    //       name: 'name2',
-    //       list: [
-    //         {name: 'pack5'},
-    //         {name: 'pack6'},
-    //         {name: 'pack7'},
-    //         {name: 'pack8'},
-    //         {name: 'pack9'},
-    //         {name: 'pack10'},
-    //         {name: 'pack11'},
-    //       ],
-    //     },
-    //     {
-    //       name: 'name3',
-    //       list: [
-    //         {name: 'pack12'},
-    //         {name: 'pack13'},
-    //         {name: 'pack14'},
-    //       ],
-    //     },
-    //     {
-    //       name: 'name4',
-    //       list: [
-    //         {name: 'pack15'},
-    //         {name: 'pack16'},
-    //       ],
-    //     },
-    //     {
-    //       name: 'name5',
-    //       list: [
-    //         {name: 'pack17'},
-    //         {name: 'pack18'},
-    //         {name: 'pack19'},
-    //         {name: 'pack20'},
-    //         {name: 'pack21'},
-    //       ],
-    //     },
-    // ];
-
+    let fltrData = this.getRepoDataByFilter(750);
   }
-
-  // pageSlice(count = 3) {
-  //   if (!this.packages.length || count == 0)
-  //     return
-  //   let book = [];
-  //   let page = [];
-  //   let pageLength = (page) => {
-  //     return page.reduce((sum, pack) => sum += pack.list.length, 0);
-  //   }
-  //   console.log('Page By ', count);
-  //   for (let [i,pack] of this.packages.entries()) {
-  //     // console.log('Pack ', pack.list.length);
-  //     if (pack.list.length < count - pageLength(page)) {
-  //       page.push(pack);
-  //     } else if (pack.list.length > count - pageLength(page)) {
-  //       // console.log(count - pageLength(page), page);
-  //       let chunk = this.getChunk(pack, count - pageLength(page));
-  //       // console.log(chunk);
-  //       page.push(chunk[0]);
-  //       book.push(page);
-  //       page = [];
-  //       // console.log(book, ' - ',page);
-  //       if (chunk[1].list.length > count) {
-  //         let packS = this.packSlice(chunk[1], count);
-  //         for (let it of packS) {
-  //           if (it.list.length == count) {
-  //             book.push([it]);
-  //           } else {
-  //             page.push(it);
-  //           }
-  //         }
-  //       } else if (chunk[1].list.length < count) {
-  //         page.push(chunk[1]);
-  //       } else {
-  //         book.push(chunk[1]);
-  //       }
-  //     } else {
-  //       page.push(pack);
-  //       book.push(page);
-  //       page = [];
-  //     }
-  //   }
-  //   if (page.length) {
-  //     book.push(page);
-  //   }
-  //   for (let [i, page] of book.entries()) {
-  //     console.log('page ', i + 1, JSON.stringify(page,null,2));
-  //   }
-  //   return book;
-  // }
 
   getAllData(){
     if (this.data)
@@ -223,104 +121,36 @@ module.exports = class ParserNodeAwesome {
       return 'Not parse data';
   }
 
-
-  // getPageFragment(pageCount = 50) {
-  //   console.log('Page Fragment: count - ', pageCount);
-  //   if (!this.data)
-  //     return;
-  //   let pageData = [];
-  //
-  //   function sanitizeForward(object, keyList) {
-  //     if (object.hasOwnProperty(keyList))
-  //     return Object.keys(object)
-  //       .filter(key => key != keyList)
-  //       .reduce((obj, key) => {
-  //         obj[key] =   object[key];
-  //         return obj;
-  //       }, {});
-  //   }
-  //
-  //   function addPage(pack, pd) {
-  //     let body = sanitizeForward(pack, 'list');
-  //     if (body) {
-  //       body.list = pd;
-  //       console.log(body);
-  //       pageData.push(body);
-  //       pd = [];
-  //     }
-  //   }
-  //
-  //   let pCount = 1;
-  //   let packages = this.data[0].packages;
-  //   if (packages) {
-  //     let count = 0;
-  //     let chapList = [];
-  //     let bodyList = [];
-  //     for (let pack of packages) {
-  //       let body = sanitizeForward(pack, 'list');
-  //       for (let [i, link] of pack.list.entries()) {
-  //         if (link.type == 'link') {
-  //           ++count;
-  //           chapList.push(link);
-  //           if (count == pageCount) {
-  //             body.list = chapList;
-  //             console.log(body);
-  //             chapList = [];
-  //             count = 0;
-  //             bodyList.push(body);
-  //             pageData.push({ page: pCount++, list: bodyList });
-  //             bodyList = [];
-  //           } else if (pack.list.length == i + 1) {
-  //             body.list = chapList;
-  //             console.log(body);
-  //             bodyList.push(body);
-  //             chapList = [];
-  //           }
-  //         } else if (link.type == 'list') {
-  //           for (let sublink of link.list) {
-  //             let subbody = sanitizeForward(sublink, 'list');
-  //             body.list = subbody;
-  //             if (sublink.type == 'link')
-  //               ;//++count;
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-    //console.log(JSON.stringify(pageData, null, 1));
-    // return pageData;
-  // }
-
+  // filter
   getRepoDataByFilter(filter) {
-    //console.log(this.data);
     if (!this.data || !filter)
       return;
     let filterData = [];
-    //get packages
+    // get packages
     let packages = this.data[0].packages;
-    if (packages) {
-        for (let pack of packages) {
-          if (pack.links) {
-            for (let link of pack.list) {
-              console.log(link);
-              if (link.type == 'link') {
-                if (link.property && link.property.star && link.property.star >= filter)
-                  chapList.push(link);
-              } else if (link.type == 'list') {
-              console.log('list');
-                // for (let listLink of link.list) {
-                //   if (property && property.star && property.star >= filter)
-                //     chapList.push(link);
-                // }
-              }
-            }
-          }
+    let IsStar = (pack, filter) => pack.property && pack.property.star && pack.property.star >= filter;
 
-           if (chapList.length)
-             filterData.push({name: pack.name, list: chapList});
+    if (packages) {
+      console.log(packages.length);
+      let filterPackages = packages.filter(chapter => {
+        let ch = chapter.list.filter(pack => {
+          if (pack.type == 'link' && IsStar(pack, filter))
+            return pack;
+          else if (pack.type == 'list') {
+            pack.list = pack.list.filter( subpack => (subpack.type == 'link' && IsStar(subpack, filter)) );
+            return pack;
+          }
+        });
+        if (ch.length) {
+          console.log('chapter', ch);
+          chapter.list = ch;
+          return chapter;
         }
+      });
+      console.log(packages.length);
+      console.log(filterPackages.length);
     }
-    // let resources = this.data[1].packages;
+
     return filterData;
   }
 
@@ -339,8 +169,8 @@ module.exports = class ParserNodeAwesome {
           cb();
       } else {
         this.data = JSON.parse(data);
-        cb();
-        //console.log(JSON.stringify(this.data,null,2));
+        if (cb)
+          cb();
       }
     });
   }
