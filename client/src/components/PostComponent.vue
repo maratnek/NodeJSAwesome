@@ -1,4 +1,4 @@
-<template>
+<template> <!-- <router-view></router-view> -->
   <div class="container">
     <h1>Awesome Modules</h1>
     <hr>
@@ -13,14 +13,14 @@
     <ul class="package-container">
       <li class="package" v-for="(packages, index) in data">
         <h3>{{packages.name}}</h3>
-        <div class="" v-for="(pack, index) in packages.list">
+        <div class="pack" v-for="(pack, index) in packages.list">
           <!-- <h3>Type: {{pack.type}}</h3> -->
           <div class="" v-if="pack.type == 'link'">
             <div class="card">
               <h5>{{pack.name}}</h5>
               <span v-if="pack.property && pack.property.star">Star: {{pack.property.star}}</span>
               <span v-if="pack.property && pack.property.date">Date: {{getDate(pack.property.date)}}</span>
-              <span><a href="pack.link">Link</a></span>
+              <span class="link"><a href="pack.link">Link</a></span>
             </div>
           </div>
           <div class="" v-else-if="pack.type == 'list'">
@@ -42,14 +42,6 @@
 
 <script>
 import PostService from '../PostService';
-import VueRouter from 'vue-router'
-const router = new VueRouter({
-  mode: 'history',
-  base: __dirname,
-  routes: [
-    // { path: '/', component: App },
-  ]
-})
 
 export default {
   name: 'PostComponent',
@@ -70,10 +62,9 @@ export default {
   async created() {
     //console.log('created');
     try {
-      console.log(router);
-      this.posts = await PostService.getPosts();
+      this.posts = await PostService.getPosts(this.$route.query);
       // console.log('post');
-      console.log(this.posts);
+      // console.log(this.posts);
       this.pages = this.posts.length;
       this.data = this.posts[0];
     } catch (err) {
@@ -92,18 +83,23 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.card {
-}
 h3 {
   margin: 40px 0 0;
+  font-size: 2.5em;
+  margin-bottom: 10px;
 }
 ul {
   list-style-type: none;
   padding: 0;
 }
 li {
-  display: inline-block;
+  /* display: inline-block; */
   margin: 0 10px;
+  border-right: 10px solid #555;
+  /* padding: 10px; */
+  /* margin-bottom: 40px; */
+  max-width: 300px;
+  margin: 10px auto;
 }
 a {
   color: #42b983;
@@ -113,19 +109,36 @@ a {
   border-radius: 4px;
 }
 
+.pack {
+  border-left: 3px solid #555;
+  border-top: 3px solid #555;
+  border-bottom: 3px solid #555;
+  /* padding: 10px; */
+  margin: auto;
+  margin-bottom: 30px;
+  max-width: 300px;
+}
+
 .card {
-  border-left: 13px solid #555;
-  padding: 10px;
-  margin-bottom: 20px;
   display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-gap: 0;
 }
 
 .card h5 {
   text-transform: uppercase;
-  grid-template-columns: 1fr;
+  grid-column: 1 / 3;
+  grid-row: 1 / 2;
 }
 
 .card span {
-  margin: 20px;
+  align-self: center;
+}
+
+.card .link {
+  grid-column: 1 / 3;
+  grid-row: 3 / 4;
+  padding: 0;
 }
 </style>
