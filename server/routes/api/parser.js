@@ -96,22 +96,32 @@ module.exports = class ParserNodeAwesome {
     this.repoName ='awesome-nodejs';
     this.init(() => {
       console.log(this.repoName);
-      this.test();
-      // this.getPageFragment(10);
-      // this.pageSlice(8);
-      // this.pageSlice(7);
-      // this.pageSlice(6)
-      pageSlice(this.packages, 5);
-      // this.pageSlice(4);
-      // this.pageSlice(3);
-      // this.pageSlice(2);
-      // this.pageSlice(1);
-      // this.pageSlice(0);
+      if (this.data)
+        this.packages = this.data[0].packages;
     });
   }
 
-  test() {
-    let fltrData = this.getRepoDataByFilter(750);
+  filterPages(filterNum, count = 30) {
+    console.log('filter', filterNum);
+    let data = this.getRepoDataByFilter(filterNum);
+    if (data) {
+      console.log(data);
+      let packages = pageSlice(data, count);
+      if (packages) {
+        return packages;
+      } else {
+        return 'Not parse data';
+      }
+    }
+  }
+
+  getAllPages(count = 30) {
+    let packages = pageSlice(this.packages, count);
+    if (packages) {
+      return packages;
+    } else {
+      return 'Not parse data';
+    }
   }
 
   getAllData(){
@@ -125,33 +135,37 @@ module.exports = class ParserNodeAwesome {
   getRepoDataByFilter(filter) {
     if (!this.data || !filter)
       return;
-    let filterData = [];
+    let filterPackages = [];
+
     // get packages
     let packages = this.data[0].packages;
-    let IsStar = (pack, filter) => pack.property && pack.property.star && pack.property.star >= filter;
+    let IsStar = (pack, filter) => pack.property
+    && pack.property.star && pack.property.star >= filter;
 
     if (packages) {
       console.log(packages.length);
-      let filterPackages = packages.filter(chapter => {
+      filterPackages = packages.filter(chapter => {
         let ch = chapter.list.filter(pack => {
           if (pack.type == 'link' && IsStar(pack, filter))
             return pack;
           else if (pack.type == 'list') {
-            pack.list = pack.list.filter( subpack => (subpack.type == 'link' && IsStar(subpack, filter)) );
+            pack.list = pack.list.filter(subpack => {
+              return subpack.type == 'link' && IsStar(subpack, filter);
+            });
             return pack;
           }
         });
         if (ch.length) {
-          console.log('chapter', ch);
+          // console.log('chapter', ch);
           chapter.list = ch;
           return chapter;
         }
       });
-      console.log(packages.length);
-      console.log(filterPackages.length);
+      // console.log(packages.length);
+      // console.log(filterPackages.length);
     }
 
-    return filterData;
+    return filterPackages;
   }
 
   init(cb) {

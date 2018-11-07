@@ -331,9 +331,6 @@ function pageSlice(packages, count) {
     book.push(page);
   }
 
-  // for (let [i, page] of book.entries()) {
-  //   console.log('page ', i + 1, JSON.stringify(page,null,2));
-  // }
   return book;
 }
 
