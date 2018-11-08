@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const url = 'http://localhost:3000';
+const url = 'api';
 
 // import VueRouter from 'vue-router'
 // const router = new VueRouter({
@@ -17,6 +17,8 @@ class PostService {
     return new Promise(async (resolve, reject) => {
       try {
         console.log(params);
+
+        console.log(url);
         const res = await axios.get(url, {
           params: {
             min_stars: params.min_stars,

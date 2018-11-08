@@ -67,6 +67,7 @@ export default {
       // console.log(this.posts);
       this.pages = this.posts.length;
       this.data = this.posts[0];
+      console.log(this.data);
     } catch (err) {
       this.error = err.message;
     }

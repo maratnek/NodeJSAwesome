@@ -10,9 +10,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const posts = require('./routes/api/posts');
-app.use('/', posts);
 
+const posts = require('./routes/api/posts');
+app.use('/api', posts);
 // production
 if (process.env.NODE_ENV === 'production') {
   //static folders
@@ -21,6 +21,7 @@ if (process.env.NODE_ENV === 'production') {
   // handle spa
   app.get(/.*/, (req, res) => res.sendFile(__dirname + '/public/index.html'));
 }
+
 
 const port = process.env.PORT || 3000;
 
