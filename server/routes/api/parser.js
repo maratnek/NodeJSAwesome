@@ -35,7 +35,7 @@ function getRepoInfo(link) {
   if(nodes.length == 3 && nodes[1] && nodes[2]) {
     let repos = gh.getRepo(nodes[1], nodes[2]);
     if (repos)
-    return repos.getDetails();
+      return repos.getDetails();
   }
 }
 
@@ -61,7 +61,7 @@ function getProperty(data, property) {
   {
     return {
       date: data[property[0]],
-      star: data[property[1]]
+      star: data[property[1]],
     };
   } else {
     console.error(`Not known prop: ${property}`);
@@ -70,17 +70,21 @@ function getProperty(data, property) {
 
 function getReduceList(list) {
   if (list)
-  return list.map(pg => {
-    return {
-      content: pg[0].content.reduce(catContent, ''),
-      target: pg[0].target.substr(1).toLowerCase(),
-      list: [],
-    };
-  });
+    return list.map(pakcageHead => {
+      return {
+        content: pakcageHead[0].content.reduce(catContent, ''),
+        target: pakcageHead[0].target.substr(1).toLowerCase(),
+        list: [],
+      };
+    });
+}
+
+function expiredFile(file) {
+
 }
 
 // Syntax analize
-// synTree[0] --- heading2
+// synTree[0] --- heading2 Contents
 // synTree[1] --- list content
 // synTree[2-n] --- all about list content
 // ---- heading2
@@ -95,12 +99,9 @@ module.exports = class ParserNodeAwesome {
     this.fileName = 'node-awesome.json';
     this.branch = 'master';
     this.user = 'sindresorhus';
-    this.repoName ='awesome-nodejs';
-    this.init(() => {
-      console.log(this.repoName);
-      if (this.data)
-        this.packages = this.data[0].packages;
-    });
+    this.repoName = 'awesome-nodejs';
+    this.data = null;
+    this.init();
   }
 
   filterPages(filterNum, count = 30) {
@@ -126,13 +127,6 @@ module.exports = class ParserNodeAwesome {
     }
   }
 
-  getAllData(){
-    if (this.data)
-      return this.data[0];
-    else
-      return 'Not parse data';
-  }
-
   // filter
   getRepoDataByFilter(filter) {
     if (!this.data || !filter)
@@ -145,9 +139,8 @@ module.exports = class ParserNodeAwesome {
     && pack.property.star && pack.property.star >= filter;
 
     if (packages) {
-      console.log(packages.length);
       filterPackages = packages.filter(chapter => {
-        let ch = chapter.list.filter(pack => {
+        chapter.list = chapter.list.filter(pack => {
           if (pack.type == 'link' && IsStar(pack, filter))
             return pack;
           else if (pack.type == 'list') {
@@ -157,23 +150,18 @@ module.exports = class ParserNodeAwesome {
             return pack;
           }
         });
-        if (ch.length) {
-          // console.log('chapter', ch);
-          chapter.list = ch;
-          return chapter;
-        }
+        return chapter;
       });
-      // console.log(packages.length);
-      // console.log(filterPackages.length);
     }
 
     return filterPackages;
   }
 
-  init(cb) {
-    console.log('Init Parser');
+
+
+  init() {
     fs.readFile(this.fileName, async (err, data) => {
-      if (err) {
+      if (err || expiredFile(this.filename)) {
         this.data = await this.getParseData();
         if (!this.data)
           return;
@@ -181,12 +169,8 @@ module.exports = class ParserNodeAwesome {
           if (err) throw err;
           console.log('The file has been saved!');
         });
-        if (cb)
-          cb();
       } else {
         this.data = JSON.parse(data);
-        if (cb)
-          cb();
       }
     });
   }
@@ -202,17 +186,15 @@ module.exports = class ParserNodeAwesome {
 
   async getParseData() {
     let data = await this.getReadme();
-    if (!data)
+    if (!data || !data.data)
       return;
 
-    // TODO: check
-    if (data.data)
-      data = data.data;
+    data = data.data;
     let mdParse = SimpleMD.defaultBlockParse;
 
     // Parse Markdown
     let synTree = mdParse(data);
-    synTree = synTree.filter((val, index, arr) => index > 0);
+    synTree = synTree.filter((val, index) => index > 0);
 
     // synTree[0] --- heading2
     if (synTree[0].content.reduce(catContent, '') != 'Contents')
@@ -288,7 +270,6 @@ module.exports = class ParserNodeAwesome {
           }
         }
       }
-      //console.log(JSON.stringify(allContents, null, 2));
       console.log('Synchronus');
       return allContents;
 
