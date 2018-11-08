@@ -11,6 +11,7 @@ const getDeepChunk = page.getDeepChunk;
 const packDeepSlice = page.packDeepSlice;
 const pageSlice = page.pageSlice;
 
+console.log('GitHub username:', pw.username);
 // basic auth
 const gh = new GitHub({
   username: pw.username,
