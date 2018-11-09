@@ -18,6 +18,7 @@ router.get('/', (req, res) => {
     } else {
       // let data = parser.getAllData();
       let data = parser.getAllPages();
+      console.log(data);
       console.log('All', req.query);
       res.send(data);
     }

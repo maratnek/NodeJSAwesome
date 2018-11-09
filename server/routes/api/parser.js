@@ -79,9 +79,19 @@ function getReduceList(list) {
     });
 }
 
-function expiredFile(file) {
-
-}
+    function expiredFile(fileName) {
+      let bExpiredFile = true;
+      try {
+        let stat = fs.lstatSync(fileName);
+        let intervalMs = Date.now() - stat.mtimeMs;
+        let days = Math.floor( intervalMs / (1000*60*60*24) );
+        if (!days)
+          bExpiredFile = false;
+      } catch (e) {
+        console.log('Error check expired file: ', e);
+      }
+      return bExpiredFile;
+    }
 
 // Syntax analize
 // synTree[0] --- heading2 Contents
@@ -102,6 +112,9 @@ module.exports = class ParserNodeAwesome {
     this.repoName = 'awesome-nodejs';
     this.data = null;
     this.init();
+    if (this.data)
+      console.log('Packages: ', this.data[0].name);
+    console.log('Constructor INIT');
   }
 
   filterPages(filterNum, count = 30) {
@@ -150,27 +163,40 @@ module.exports = class ParserNodeAwesome {
             return pack;
           }
         });
-        return chapter;
+        if (chapter.list.length)
+          return chapter;
       });
     }
 
     return filterPackages;
   }
 
-
+  //
+  async updateData() {
+    this.data = await this.getParseData();
+    if (!this.data)
+      return;
+    fs.writeFile(this.fileName, JSON.stringify(this.data), (err) => {
+      if (err) throw err;
+      console.log('The file has been saved!');
+    });
+  }
 
   init() {
     fs.readFile(this.fileName, async (err, data) => {
-      if (err || expiredFile(this.filename)) {
-        this.data = await this.getParseData();
-        if (!this.data)
-          return;
-        fs.writeFile(this.fileName, JSON.stringify(this.data), (err) => {
-          if (err) throw err;
-          console.log('The file has been saved!');
-        });
+      if (err) {
+        await this.updateData();
       } else {
+        let fileName = this.fileName;
+        if (expiredFile(fileName))
+          this.updateData();
+        console.log('Parse JSON data');
         this.data = JSON.parse(data);
+      }
+      // Init packages
+      if (this.data && this.data.length) {
+        console.log('Packages init: ', this.data[0].name);
+        this.packages = this.data[0].packages;
       }
     });
   }
