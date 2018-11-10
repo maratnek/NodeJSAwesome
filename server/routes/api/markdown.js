@@ -1,12 +1,13 @@
-const readme = require('./readme.js');
+const repo = require('./repo.js');
 const fs = require('fs');
 
 const md = require('simple-markdown');
 const mdParse = md.defaultBlockParse;
 
+
 async function parse() {
   console.log('Parse');
-  let request = await readme();
+  let request = await repo.getReadmeData();
 
   if (request.status != 200 || !request.data)
     return;
@@ -14,8 +15,9 @@ async function parse() {
   let data = request.data;
   let result = mdParse(data);
   result = result.slice(1);
-  fs.writeFileSync('file.json',JSON.stringify(result, null, 2));
-  syntaxAnaliseMD(result);
+  fs.writeFileSync('file.json', JSON.stringify(result, null, 2));
+  console.log('Analise data');
+  await syntaxAnaliseMD(result);
 
   // find content
   // get content list
@@ -33,21 +35,6 @@ function isIterable(obj) {
 }
 // -- utils
 
-function getRepoInfo(link) {
-  if (!link)
-    return;
-  const gitUrl = url.parse(link);
-  if (!gitUrl || gitUrl.host != 'github.com') {
-    console.log('Not github link: ', gitUrl.host);
-    return link;
-  }
-  let nodes = gitUrl.path.split(`/`);
-  if(nodes.length == 3 && nodes[1] && nodes[2]) {
-    let repos = gh.getRepo(nodes[1], nodes[2]);
-    if (repos)
-      return repos.getDetails();
-  }
-}
 
 function IsHead(head, level) {
   return (head.type == 'heading' && head.level == level);
@@ -101,36 +88,38 @@ function syntaxAnaliseMD(synTree) {
   // syntax analise and clear not use data
   // console.trace('syntax analise');
   console.log('Syntax Analise');
-  console.log(synTree);
+  // console.log(synTree);
   let fullList = [];
 
   // synTree[0] --- heading2
   if (existContent(synTree[0])) {
-      if (existList(synTree[1])) {
-        let list = getListContent(synTree[1].items, synTree, 2);
-        if (list) {
-          let bodyList = findBodyLists(list, synTree);
-          console.log(JSON.stringify(bodyList, null, 2));
-          if (bodyList) {
-            fullList = getAllGitHubInfo(bodyList);
-          }
+    if (existList(synTree[1])) {
+      let list = getListContent(synTree[1].items, synTree, 2);
+      if (list) {
+        let bodyList = findBodyLists(list, synTree);
+        // console.log(JSON.stringify(bodyList, null, 2));
+        if (bodyList) {
+          fullList = getAllGitHubInfo(bodyList);
         }
-      } else {
-        console.log('Not content list');
       }
+    } else {
+      console.log('Not content list');
+    }
   }
+
   return fullList;
 }
 
 function existContent(content) {
-    // synTree[0] --- heading2
-    console.log(content);
-    if (IsHead(content, 2)) {
-      let data = content.content.reduce(cancatContent, '');
-      if (data == 'Contents')
-        return true;
-    }
-    return false;
+  // synTree[0] --- heading2
+  console.log(content);
+  if (IsHead(content, 2)) {
+    let data = content.content.reduce(cancatContent, '');
+    if (data == 'Contents')
+      return true;
+  }
+
+  return false;
 }
 
 function existList(list) {
@@ -147,62 +136,87 @@ function getListContent(parts, synTree, index) {
   for (let part of parts) {
     if (!part.length || !part[0].target || !part[2] || !part[2].items)
       continue;
-    console.log(part[0]);
-    let link = part[0].content.reduce(cancatContent,'');
+    let link = part[0].content.reduce(cancatContent, '');
     // find links and list index
     for (let i = index; i < synTree.length; i++) {
       if (IsHead(synTree[i], 2) && IsLinkContent(synTree[i], link)) {
         index = i;
-        content.push({name: link, part: part[2].items, index: index})
+        content.push({ name: link, part: part[2].items, index: index });
       }
     }
   }
   return content;
 }
 
+function getLink(pack) {
+  let packLink = pack[0];
+  let content;
+  if (pack.length == 3 && pack[2].items) {
+    // console.log(pack[2].items);
+    content = pack[2].items.reduce((str, item) => {
+      str += item.reduce((s, it) => s += it.content, '');
+      return str;
+    }, '');
+  }
+  if (packLink)
+    return {
+      link: packLink.target,
+      type: packLink.type,
+      name: packLink.content.reduce(cancatContent, ''),
+      content: content,
+    };
+}
+
+function getBody(body) {
+  if (body.items) {
+    return body.items.map((pack) => {
+      // sublist
+      if (pack.length && pack[0].type == 'text' && IsList(pack[pack.length - 1])) {
+        // console.log(pack);
+        let content = pack.reduce( (str, it) => {
+          if (it.type == 'text')
+            str += it.content;
+          return str;
+        }, '');
+        return {
+          name: content.trim(),
+          type: pack[pack.length - 1].type,
+          list: pack[pack.length - 1].items.map(p => {
+            if (p.length && p[0].type == 'link')
+            return getLink(p);
+          }),
+        };
+      } else if (pack.length && pack[0].type == 'link') {
+        return getLink(pack);
+      }
+    });
+  }
+}
+
 function findBodyLists(list, synTree) {
   // find list in tree
   if (!isIterable(list))
     return;
-    console.log('list length: ', list.length);
   list = list.map((p) => {
     console.log('part length: ', p.part.length);
     let index = p.index;
     p.part = p.part.map(ch => {
-      // console.log(ch);
       if (!ch.length || !ch[0] || ch[0].type !== 'link')
         next;
-      let link = ch[0].content.reduce(cancatContent, '');
-      let newChap = {name: link};
+      let target = ch[0].content.reduce(cancatContent, '');
+      let newChap = { name: target };
       for (let i = index; i < synTree.length; i++) {
-        // get body
-// n ------- heading3
-// n + 1------- list
-// ------------ package or {heading -> package list}
-        if (IsHead(synTree[i], 3) && IsLinkContent(synTree[i], link)) {
+        if (IsHead(synTree[i], 3) && IsLinkContent(synTree[i], target)) {
           index = i;
           let head = synTree[i];
-          console.log(head.content.reduce(cancatContent,''));
           ++i;
           let body = synTree[i];
           if (body.type === 'list') {
-          // console.log(body.items);
-            if (body.items) {
-              newChap.list = body.items.map((pack) => {
-                if (pack.length && pack[0].type == 'text' && IsList(pack[1])) {
-                  console.log(pack[1].items);
-                  return pack[1].items;
-                } else if (pack.length && pack[0].type == 'link') {
-                  return {list: pack[0].target, type: pack[0].type, content: pack[0].content.reduce(cancatContent, '')};
-                }
-              });
-
-            }
-
+            newChap.list = getBody(body);
           }
-          // content.push({name: link, part: part[2].items, index: index})
         }
       }
+
       return newChap;
     });
     return p;
@@ -212,8 +226,40 @@ function findBodyLists(list, synTree) {
   return list;
 }
 
-function getAllGitHubInfo(bodyList) {
+const repoInfo = [
+  'updated_at',
+  'stargazers_count',
+];
+
+async function getAllGitHubInfo(bodyList) {
   // get all GitHub info
+  let index = 0;
+  bodyList.map(chapter => chapter.part.map(part => part.list.map(async (pack) => {
+    if (!pack)
+    return;
+    console.log('index', index++);
+    // let rate = await repo.getRateLimit();
+    if (true) {
+      if (pack.type == 'link') {
+        let info = await repo.getGitHubInfo(pack.link);
+        if (info && info.hasOwnProperty('data')) {
+          info = getProperty(info.data, repoInfo);
+          console.log(info);
+        }
+      } else if (pack.type == 'list') {
+        pack.list = pack.list.map(async p => {
+          let info = await repo.getGitHubInfo(p.link);
+          if (info && info.hasOwnProperty('data')) {
+            info = getProperty(info.data, repoInfo);
+            console.log(info);
+          }
+        });
+      }
+    } else {
+        // wait
+    }
+
+  })));
   return;
 }
 

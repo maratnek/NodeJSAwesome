@@ -79,19 +79,19 @@ function getReduceList(list) {
     });
 }
 
-    function expiredFile(fileName) {
-      let bExpiredFile = true;
-      try {
-        let stat = fs.lstatSync(fileName);
-        let intervalMs = Date.now() - stat.mtimeMs;
-        let days = Math.floor( intervalMs / (1000*60*60*24) );
-        if (!days)
-          bExpiredFile = false;
-      } catch (e) {
-        console.log('Error check expired file: ', e);
-      }
-      return bExpiredFile;
-    }
+function expiredFile(fileName) {
+  let bExpiredFile = true;
+  try {
+    let stat = fs.lstatSync(fileName);
+    let intervalMs = Date.now() - stat.mtimeMs;
+    let days = Math.floor( intervalMs / (1000*60*60*24) );
+    if (!days)
+    bExpiredFile = false;
+  } catch (e) {
+    console.log('Error check expired file: ', e);
+  }
+  return bExpiredFile;
+}
 
 // Syntax analize
 // synTree[0] --- heading2 Contents

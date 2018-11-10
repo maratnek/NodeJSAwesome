@@ -16,9 +16,7 @@ router.get('/', (req, res) => {
       let data = parser.filterPages(req.query.min_stars);
       res.send(data);
     } else {
-      // let data = parser.getAllData();
       let data = parser.getAllPages();
-      console.log(data);
       console.log('All', req.query);
       res.send(data);
     }
