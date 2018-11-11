@@ -1,11 +1,12 @@
-const repo = require('./repo.js');
+const repo = require('./repos.js');
 const fs = require('fs');
 
 const md = require('simple-markdown');
 const mdParse = md.defaultBlockParse;
 
+const utils = require('./utils');
 
-async function parse() {
+module.exports = async function parse() {
   console.log('Parse');
   let request = await repo.getReadmeData();
 
@@ -15,26 +16,10 @@ async function parse() {
   let data = request.data;
   let result = mdParse(data);
   result = result.slice(1);
-  fs.writeFileSync('file.json', JSON.stringify(result, null, 2));
   console.log('Analise data');
-  await syntaxAnaliseMD(result);
-
-  // find content
-  // get content list
-  console.log('Synchronus');
-  getListContent(null);
+  let mdCore = await syntaxAnaliseMD(result);
+  return mdCore;
 };
-
-// utils
-function isIterable(obj) {
-  // checks for null and undefined
-  if (obj == null) {
-    return false;
-  }
-  return typeof obj[Symbol.iterator] === 'function';
-}
-// -- utils
-
 
 function IsHead(head, level) {
   return (head.type == 'heading' && head.level == level);
@@ -53,27 +38,17 @@ function cancatContent(sum, it) {
 };
 
 function getProperty(data, property) {
-  if (data.hasOwnProperty(property[0]) &&
-  data.hasOwnProperty(property[1]))
-  {
-    return {
-      date: data[property[0]],
-      star: data[property[1]],
-    };
-  } else {
-    console.error(`Not known prop: ${property}`);
+  if (!property)
+    return;
+  let d = {};
+  for (let p of property) {
+    if (data.hasOwnProperty(p[0]))
+      d[p[1]] = data[p[0]];
+    else
+      console.error(`Not known prop: ${p}`);
   }
-}
 
-function getReduceList(list) {
-  if (list)
-  return list.map(pakcageHead => {
-    return {
-      content: pakcageHead[0].content.reduce(cancatContent, ''),
-      target: pakcageHead[0].target.substr(1).toLowerCase(),
-      list: [],
-    };
-  });
+  return d;
 }
 
 // Syntax analize
@@ -84,7 +59,7 @@ function getReduceList(list) {
 // ------- heading3
 // ------- list
 // ------------ package or {heading -> package list}
-function syntaxAnaliseMD(synTree) {
+async function syntaxAnaliseMD(synTree) {
   // syntax analise and clear not use data
   // console.trace('syntax analise');
   console.log('Syntax Analise');
@@ -96,10 +71,10 @@ function syntaxAnaliseMD(synTree) {
     if (existList(synTree[1])) {
       let list = getListContent(synTree[1].items, synTree, 2);
       if (list) {
-        let bodyList = findBodyLists(list, synTree);
-        // console.log(JSON.stringify(bodyList, null, 2));
-        if (bodyList) {
-          fullList = getAllGitHubInfo(bodyList);
+        fullList = findBodyLists(list, synTree);
+        if (fullList) {
+          fullList = await getAllGitHubInfo(fullList);
+          console.log('get All github info');
         }
       }
     } else {
@@ -112,7 +87,6 @@ function syntaxAnaliseMD(synTree) {
 
 function existContent(content) {
   // synTree[0] --- heading2
-  console.log(content);
   if (IsHead(content, 2)) {
     let data = content.content.reduce(cancatContent, '');
     if (data == 'Contents')
@@ -130,7 +104,7 @@ function existList(list) {
 }
 
 function getListContent(parts, synTree, index) {
-  if (!isIterable(parts))
+    if (!utils.isIterable(parts))
     return;
   let content = [];
   for (let part of parts) {
@@ -158,6 +132,7 @@ function getLink(pack) {
       return str;
     }, '');
   }
+
   if (packLink)
     return {
       link: packLink.target,
@@ -195,7 +170,7 @@ function getBody(body) {
 
 function findBodyLists(list, synTree) {
   // find list in tree
-  if (!isIterable(list))
+  if (!utils.isIterable(list))
     return;
   list = list.map((p) => {
     console.log('part length: ', p.part.length);
@@ -211,6 +186,7 @@ function findBodyLists(list, synTree) {
           let head = synTree[i];
           ++i;
           let body = synTree[i];
+          console.log(target, body);
           if (body.type === 'list') {
             newChap.list = getBody(body);
           }
@@ -226,41 +202,60 @@ function findBodyLists(list, synTree) {
   return list;
 }
 
-const repoInfo = [
-  'updated_at',
-  'stargazers_count',
-];
+function expiredFile(fileName) {
+  let bExpiredFile = true;
+  try {
+    let stat = fs.lstatSync(fileName);
+    let intervalMs = Date.now() - stat.mtimeMs;
+    let days = Math.floor(intervalMs / (1000 * 60 * 60 * 24));
+    if (!days)
+    bExpiredFile = false;
+  } catch (e) {
+    console.log('Error check expired file: ', e);
+  }
 
-async function getAllGitHubInfo(bodyList) {
-  // get all GitHub info
-  let index = 0;
-  bodyList.map(chapter => chapter.part.map(part => part.list.map(async (pack) => {
-    if (!pack)
-    return;
-    console.log('index', index++);
-    // let rate = await repo.getRateLimit();
-    if (true) {
-      if (pack.type == 'link') {
-        let info = await repo.getGitHubInfo(pack.link);
-        if (info && info.hasOwnProperty('data')) {
-          info = getProperty(info.data, repoInfo);
-          console.log(info);
-        }
-      } else if (pack.type == 'list') {
-        pack.list = pack.list.map(async p => {
-          let info = await repo.getGitHubInfo(p.link);
-          if (info && info.hasOwnProperty('data')) {
-            info = getProperty(info.data, repoInfo);
-            console.log(info);
-          }
-        });
-      }
-    } else {
-        // wait
-    }
-
-  })));
-  return;
+  return bExpiredFile;
 }
 
-parse();
+const repoInfo = [
+  ['updated_at', 'date'],
+  ['stargazers_count', 'star'],
+];
+
+async function getRepoInfo(pack) {
+  let info;
+  if (pack.type == 'link') {
+    info = await repo.getGitHubInfo(pack.link);
+    if (info && info.hasOwnProperty('data')) {
+      info = getProperty(info.data, repoInfo);
+      console.log(info);
+      pack.info = info;
+    }
+  } else if (pack.type == 'list') {
+    pack.list = pack.list.map(async p => {
+      info = await repo.getGitHubInfo(p.link);
+      if (info && info.hasOwnProperty('data')) {
+        info = getProperty(info.data, repoInfo);
+        console.log(info);
+        pack.info = info;
+      }
+    });
+  }
+
+}
+
+async function getAllGitHubInfo(bodyList) {
+  let index = 0;
+  for (let chapter of bodyList) {
+    for (let part of chapter.part) {
+      for (let pack of part.list) {
+        index++;
+        console.log('index ', index);
+        // await getRepoInfo(pack);
+      }
+    }
+  }
+
+  console.log('Get all github info');
+  return bodyList;
+}

@@ -18,8 +18,8 @@
           <div class="" v-if="pack.type == 'link'">
             <div class="card">
               <h5>{{pack.name}}</h5>
-              <span v-if="pack.property && pack.property.star">Star: {{pack.property.star}}</span>
-              <span v-if="pack.property && pack.property.date">Date: {{getDate(pack.property.date)}}</span>
+              <span v-if="pack.info && pack.info.star">Star: {{pack.info.star}}</span>
+              <span v-if="pack.info && pack.info.date">Date: {{getDate(pack.info.date)}}</span>
               <span class="link"><a href="pack.link">Link</a></span>
             </div>
           </div>
@@ -28,8 +28,8 @@
             <div class="" v-for="(pack,index) in pack.list">
               <div class="card">
                 <h5>{{pack.name}}</h5>
-                <span v-if="pack.property && pack.property.star">Star: {{pack.property.star}}</span>
-                <span v-if="pack.property && pack.property.date">Date: {{getDate(pack.property.date)}}</span>
+                <span v-if="pack.info && pack.info.star">Star: {{pack.property.star}}</span>
+                <span v-if="pack.info && pack.info.date">Date: {{getDate(pack.info.date)}}</span>
                 <span><a href="pack.link">Link</a></span>
               </div>
             </div>
