@@ -25,8 +25,4 @@ router.get('/', (req, res) => {
   }
 });
 
-// Add Post for filte min stars
-
-// Delete Post
-
 module.exports = router;

@@ -29,11 +29,21 @@ module.exports = class ParserNodeAwesome {
     console.log('Constructor INIT');
   }
 
+  getAllPages(count = 30) {
+    this.init();
+    let packages = pageSlice(this.packages, count);
+    if (packages) {
+      return packages;
+    } else {
+      return 'Not parse data';
+    }
+  }
+
   filterPages(filterNum, count = 30) {
     console.log('filter', filterNum);
+    this.init();
     let data = this.getRepoDataByFilter(filterNum);
     if (data) {
-      console.log(data);
       let packages = pageSlice(data, count);
       if (packages) {
         return packages;
@@ -43,27 +53,17 @@ module.exports = class ParserNodeAwesome {
     }
   }
 
-  getAllPages(count = 30) {
-    console.log(this.packages);
-    let packages = pageSlice(this.packages, count);
-    if (packages) {
-      return packages;
-    } else {
-      return 'Not parse data';
-    }
-  }
-
   // filter
   getRepoDataByFilter(filter) {
-    if (!this.data || !filter)
+    if (!this.packages || !filter)
       return;
     let filterPackages = [];
 
     // get packages
-    let packages = this.data[0].packages;
-    let IsStar = (pack, filter) => pack.property
-    && pack.property.star && pack.property.star >= filter;
+    let IsStar = (pack, filter) => pack.info
+    && pack.info.star && pack.info.star >= filter;
 
+    let packages = this.packages;
     if (packages) {
       filterPackages = packages.filter(chapter => {
         chapter.list = chapter.list.filter(pack => {
@@ -71,9 +71,11 @@ module.exports = class ParserNodeAwesome {
             return pack;
           else if (pack.type == 'list') {
             pack.list = pack.list.filter(subpack => {
-              return subpack.type == 'link' && IsStar(subpack, filter);
+              if (subpack.type == 'link' && IsStar(subpack, filter))
+                return subpack;
             });
-            return pack;
+            if (pack.list.length)
+              return pack;
           }
         });
         if (chapter.list.length)
@@ -86,7 +88,13 @@ module.exports = class ParserNodeAwesome {
 
   //
   async updateData() {
-    this.data = await parser();
+    if (!this.mutex) {
+      this.mutex = 1;
+      this.data = await parser();
+      this.mutex = 0;
+    } else {
+      return;
+    }
     if (!this.data)
       return;
     fs.writeFile(this.fileName, JSON.stringify(this.data), (err) => {
@@ -96,7 +104,6 @@ module.exports = class ParserNodeAwesome {
   }
 
   init() {
-    parser();
     fs.readFile(this.fileName, async (err, data) => {
       if (err) {
         await this.updateData();
@@ -109,7 +116,6 @@ module.exports = class ParserNodeAwesome {
       }
       // Init packages
       if (this.data && this.data.length) {
-        // console.log('Packages init: ', JSON.stringify(this.data,null,2));
         this.packages = this.data[0].part;
       }
     });

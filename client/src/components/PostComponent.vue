@@ -2,36 +2,22 @@
   <div class="container">
     <h1>Awesome Modules</h1>
     <hr>
-    <h2>Download Modules</h2>
-    <!-- {{packages}} -->
-    <!-- {{posts}} -->
     <p class="error" v-if="error">{{error}}</p>
-    <div class="pages">
-      <!-- <span v-for="ind in pages"> {{ind}}</span> -->
-      <button v-for="ind in pages" v-on:click="changePage(ind)"> {{ind}}</button>
+    <div v-else-if="!error" class="pages">
+      <h4>Pages</h4>
+      <button v-for="ind in pages" v-bind:class="{ active: activeInd == ind}" v-on:click="changePage(ind)"> {{ind}}</button>
     </div>
     <ul class="package-container">
       <li class="package" v-for="(packages, index) in data">
         <h3>{{packages.name}}</h3>
         <div class="pack" v-for="(pack, index) in packages.list">
-          <!-- <h3>Type: {{pack.type}}</h3> -->
           <div class="" v-if="pack.type == 'link'">
-            <div class="card">
-              <h5>{{pack.name}}</h5>
-              <span v-if="pack.info && pack.info.star">Star: {{pack.info.star}}</span>
-              <span v-if="pack.info && pack.info.date">Date: {{getDate(pack.info.date)}}</span>
-              <span class="link"><a href="pack.link">Link</a></span>
-            </div>
+            <CardComponent v-bind:pack="pack"></CardComponent>
           </div>
           <div class="" v-else-if="pack.type == 'list'">
             <h4>{{pack.name}}</h4>
             <div class="" v-for="(pack,index) in pack.list">
-              <div class="card">
-                <h5>{{pack.name}}</h5>
-                <span v-if="pack.info && pack.info.star">Star: {{pack.property.star}}</span>
-                <span v-if="pack.info && pack.info.date">Date: {{getDate(pack.info.date)}}</span>
-                <span><a href="pack.link">Link</a></span>
-              </div>
+              <CardComponent v-bind:pack="pack"></CardComponent>
             </div>
           </div>
         </div>
@@ -42,16 +28,16 @@
 
 <script>
 import PostService from '../PostService';
+import CardComponent from './CardComponent.vue'
 
 export default {
   name: 'PostComponent',
   data() {
     return {
-      posts: '',
-      error: '',
-      text: 'hello',
+      activeInd: 1,
       pages: [],
       data: [],
+      error: '',
       getDate: (date) => {
         let d = new Date(date);
         let option = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -60,30 +46,45 @@ export default {
     }
   },
   async created() {
-    //console.log('created');
     try {
       this.posts = await PostService.getPosts(this.$route.query);
-      // console.log('post');
-      // console.log(this.posts);
-      this.pages = this.posts.length;
-      this.data = this.posts[0];
-      console.log(this.data);
+      if (typeof this.posts === 'string') {
+        this.error = 'Parse Error ' + this.posts;
+      } else {
+        this.pages = this.posts.length;
+        this.data = this.posts[0];
+        console.log(this.posts);
+      }
     } catch (err) {
       this.error = err.message;
     }
   },
   methods: {
     changePage: function (index) {
-      if (index)
+      if (index) {
+        this.activeInd = index;
         this.data = this.posts[index - 1];
-      // this.message = this.message.split('').reverse().join('')
+      }
     }
   },
+  components: {
+    CardComponent,
+  }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+button {
+  background: white;
+  border: 1px solid #888;
+  margin: 2px;
+}
+
+.active {
+  background: #888;
+  color: white;
+}
 h3 {
   margin: 40px 0 0;
   font-size: 2.5em;
@@ -94,11 +95,8 @@ ul {
   padding: 0;
 }
 li {
-  /* display: inline-block; */
   margin: 0 10px;
   border-right: 10px solid #555;
-  /* padding: 10px; */
-  /* margin-bottom: 40px; */
   max-width: 300px;
   margin: 10px auto;
 }
@@ -120,26 +118,4 @@ a {
   max-width: 300px;
 }
 
-.card {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 0;
-}
-
-.card h5 {
-  text-transform: uppercase;
-  grid-column: 1 / 3;
-  grid-row: 1 / 2;
-}
-
-.card span {
-  align-self: center;
-}
-
-.card .link {
-  grid-column: 1 / 3;
-  grid-row: 3 / 4;
-  padding: 0;
-}
 </style>

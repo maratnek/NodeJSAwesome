@@ -104,7 +104,7 @@ function existList(list) {
 }
 
 function getListContent(parts, synTree, index) {
-    if (!utils.isIterable(parts))
+  if (!utils.isIterable(parts))
     return;
   let content = [];
   for (let part of parts) {
@@ -232,14 +232,14 @@ async function getRepoInfo(pack) {
       pack.info = info;
     }
   } else if (pack.type == 'list') {
-    pack.list = pack.list.map(async p => {
+    for (let p of pack.list) {
       info = await repo.getGitHubInfo(p.link);
       if (info && info.hasOwnProperty('data')) {
         info = getProperty(info.data, repoInfo);
-        console.log(info);
-        pack.info = info;
+        console.log('list', info);
+        p.info = info;
       }
-    });
+    }
   }
 
 }
@@ -249,9 +249,7 @@ async function getAllGitHubInfo(bodyList) {
   for (let chapter of bodyList) {
     for (let part of chapter.part) {
       for (let pack of part.list) {
-        index++;
-        console.log('index ', index);
-        // await getRepoInfo(pack);
+        await getRepoInfo(pack);
       }
     }
   }

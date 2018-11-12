@@ -7,11 +7,13 @@
 
 <script>
 import PostComponent from './components/PostComponent.vue'
+import CardComponent from './components/CardComponent.vue'
 
 export default {
   name: 'app',
   components: {
-    PostComponent
+    PostComponent,
+    CardComponent,
   }
 }
 </script>

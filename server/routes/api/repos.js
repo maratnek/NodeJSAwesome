@@ -55,10 +55,7 @@ module.exports = {
       let repos = gh.getRepo(nodes[1], nodes[2]);
       if (repos) {
         try {
-          // let details;
-          // setTimeout(async ()=>{ details = await repos.getDetails();}, 1000);
           return await repos.getDetails();
-          // return details;
         } catch (e) {
           let resp = await gh.getRateLimit().getRateLimit();
           let intervalMs =  new Date(resp.data.resources.search.reset * 1000) - Date.now();
